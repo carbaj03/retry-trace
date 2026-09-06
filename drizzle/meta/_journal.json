@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1788687253418,
+      "tag": "0000_curious_gamma_corps",
+      "breakpoints": true
+    }
+  ]
+}
