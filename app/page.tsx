@@ -149,8 +149,8 @@ export default function Home() {
         ),
       );
     } catch {
-      setError(
-        'Browser tool registration is unavailable. The form and remote MCP API remain available.',
+      console.warn(
+        'Browser tool registration is unavailable; form and remote MCP API remain available.',
       );
     }
     return () => lifecycle.abort();
