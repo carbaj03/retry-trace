@@ -105,6 +105,7 @@ export default function Home() {
       failures: z.number().int().min(1).max(4),
       delay_seconds: z.number().int().min(0).max(5),
       header_format: z.enum(['seconds', 'http-date']),
+      participant_token: z.string().regex(/^[a-f0-9]{64}$/).optional().describe('Reuse an existing participant capability, preserving its activity cohort.'),
     });
     try {
       void Promise.resolve(
