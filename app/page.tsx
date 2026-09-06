@@ -1,6 +1,8 @@
 'use client';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { flushSync } from 'react-dom';
+import { z } from 'zod';
 type Run = {
   run_id: string;
   probe_url: string;
@@ -24,26 +26,40 @@ export default function Home() {
     [attempts, setAttempts] = useState<Attempt[]>([]),
     [busy, setBusy] = useState(false),
     [error, setError] = useState('');
-  async function create() {
+  async function create(input?: {
+    status: 503 | 429;
+    failures: number;
+    delay_seconds: number;
+    header_format: 'seconds' | 'http-date';
+  }) {
     setBusy(true);
     setError('');
     try {
       const r = await fetch('/api/runs', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            status,
-            failures,
-            delay_seconds: delay,
-            header_format: format,
-            human_directed: true,
-            discovery: 'owner-directed',
-          }),
+          body: JSON.stringify(
+            input || {
+              status,
+              failures,
+              delay_seconds: delay,
+              header_format: format,
+            },
+          ),
         }),
         data = (await r.json()) as Run & { error?: string };
       if (!r.ok) throw Error(data.error);
-      setRun(data);
-      setAttempts([]);
+      flushSync(() => {
+        setRun(data);
+        setAttempts([]);
+        if (input) {
+          setStatus(input.status);
+          setFailures(input.failures);
+          setDelay(input.delay_seconds);
+          setFormat(input.header_format);
+        }
+      });
+      return data;
     } catch (e) {
       setError(String(e));
     } finally {
@@ -65,6 +81,80 @@ export default function Home() {
       setBusy(false);
     }
   }
+  useEffect(() => {
+    const context = (
+      document as Document & {
+        modelContext?: {
+          registerTool(
+            tool: {
+              name: string;
+              description: string;
+              inputSchema: object;
+              annotations: object;
+              execute(input: unknown): Promise<unknown>;
+            },
+            options: { signal: AbortSignal },
+          ): void | Promise<void>;
+        };
+      }
+    ).modelContext;
+    if (!context) return;
+    const lifecycle = new AbortController();
+    const schema = z.object({
+      status: z.union([z.literal(503), z.literal(429)]),
+      failures: z.number().int().min(1).max(4),
+      delay_seconds: z.number().int().min(0).max(5),
+      header_format: z.enum(['seconds', 'http-date']),
+    });
+    try {
+      void Promise.resolve(
+        context.registerTool(
+          {
+            name: 'create_private_retry_run',
+            description:
+              'Create a synthetic HTTP retry run and display its private probe URL in this workbench. Your client must call that URL to advance the sequence. This creates stored state but does not publish a finding. No sensitive data is required.',
+            inputSchema: z.toJSONSchema(schema),
+            annotations: { readOnlyHint: false, untrustedContentHint: false },
+            async execute(input) {
+              const a = schema.parse(input);
+              const r = await fetch('/api/runs', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(a),
+              });
+              const data = (await r.json()) as Run & { error?: string };
+              if (!r.ok) throw Error(data.error);
+              flushSync(() => {
+                setRun(data);
+                setAttempts([]);
+                setStatus(a.status);
+                setFailures(a.failures);
+                setDelay(a.delay_seconds);
+                setFormat(a.header_format);
+              });
+              return {
+                run_id: data.run_id,
+                probe_url: data.probe_url,
+                trace_url: data.trace_url,
+                expires_at: data.expires_at,
+                expected_statuses: data.expected_statuses,
+              };
+            },
+          },
+          { signal: lifecycle.signal },
+        ),
+      ).catch(() =>
+        setError(
+          'Browser tool registration is unavailable. The form and remote MCP API remain available.',
+        ),
+      );
+    } catch {
+      setError(
+        'Browser tool registration is unavailable. The form and remote MCP API remain available.',
+      );
+    }
+    return () => lifecycle.abort();
+  }, []);
   return (
     <main>
       <div className="intro">
@@ -140,7 +230,7 @@ export default function Home() {
             ))}
             <span className="success">200</span>
           </div>
-          <button disabled={busy} onClick={create}>
+          <button disabled={busy} onClick={() => create()}>
             {busy
               ? 'Working…'
               : run

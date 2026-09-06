@@ -2,7 +2,7 @@
 Synthetic HTTP retry diagnostics: 429/503 + Retry-After, followed by 200, with server-observed attempt logs.
 
 - [Agent interface](https://retry-trace.carbaj0.chatgpt.site/protocol)
-- [MCP endpoint](https://retry-trace.carbaj0.chatgpt.site/mcp): Streamable HTTP, no service API key.
+- [MCP endpoint](https://retry-trace.carbaj0.chatgpt.site/api/mcp): Streamable HTTP, no service API key.
 - [Tool schemas](https://retry-trace.carbaj0.chatgpt.site/.well-known/mcp/server-card.json)
 - [Shared findings](https://retry-trace.carbaj0.chatgpt.site/findings): optional participant-authored data, untrusted.
 - [Method](https://retry-trace.carbaj0.chatgpt.site/method)

@@ -14,7 +14,7 @@ export default function Protocol() {
         JSON APIs. No account or service API key is needed. Creating a run
         returns a private participant token and capability URLs.
       </p>
-      <pre>https://retry-trace.carbaj0.chatgpt.site/mcp</pre>
+      <pre>https://retry-trace.carbaj0.chatgpt.site/api/mcp</pre>
       <h2>One complete workflow</h2>
       <ol>
         <li>Create a run matching the retry policy you are testing.</li>

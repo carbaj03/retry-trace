@@ -39,7 +39,7 @@ const client = new Client({
   version: '1.0.0',
 });
 await client.connect(
-  new StreamableHTTPClientTransport(new URL('/mcp', base), {
+  new StreamableHTTPClientTransport(new URL('/api/mcp', base), {
     requestInit: { headers },
   }),
 );

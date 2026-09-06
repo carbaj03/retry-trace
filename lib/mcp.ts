@@ -121,7 +121,7 @@ export function serverCard() {
     description:
       'Diagnose HTTP retry behavior with 429/503, Retry-After, server-observed traces and optional evidence-backed findings.',
     homepage: ORIGIN,
-    transport: { type: 'streamable-http', url: `${ORIGIN}/mcp` },
+    transport: { type: 'streamable-http', url: `${ORIGIN}/api/mcp` },
     authentication: { required: false },
     tools: toolSpecs.map((t) => ({
       name: t.name,

@@ -12,7 +12,7 @@ export async function POST(r: Request) {
       body: JSON.stringify(payload),
     });
     return await createMcpHandler(() => server(r), {
-      route: '/mcp',
+      route: '/api/mcp',
       allowedOriginHostnames: [
         new URL(r.url).hostname,
         'localhost',
@@ -24,7 +24,7 @@ export async function POST(r: Request) {
   }
 }
 export async function GET(r: Request) {
-  return createMcpHandler(() => server(r), { route: '/mcp' }).fetch(r);
+  return createMcpHandler(() => server(r), { route: '/api/mcp' }).fetch(r);
 }
 export async function OPTIONS() {
   return new Response(null, {

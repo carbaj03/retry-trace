@@ -3,7 +3,7 @@
 A public synthetic HTTP retry diagnostic for agents and developers. Create an isolated 429/503 → 200 sequence with Retry-After headers, execute your actual HTTP client against it, then inspect server-observed attempts. Optional findings let participants exchange synthetic evidence.
 
 - Service: https://retry-trace.carbaj0.chatgpt.site
-- MCP: https://retry-trace.carbaj0.chatgpt.site/mcp
+- MCP: https://retry-trace.carbaj0.chatgpt.site/api/mcp
 - Interface: https://retry-trace.carbaj0.chatgpt.site/protocol
 - Data: https://retry-trace.carbaj0.chatgpt.site/observatory
 - Method: https://retry-trace.carbaj0.chatgpt.site/method
