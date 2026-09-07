@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { flushSync } from 'react-dom';
 import { z } from 'zod';
+import PublishRecord from '@/components/publish-record';
 type Run = {
   run_id: string;
   probe_url: string;
@@ -25,7 +26,41 @@ export default function Home() {
     [run, setRun] = useState<Run | null>(null),
     [attempts, setAttempts] = useState<Attempt[]>([]),
     [busy, setBusy] = useState(false),
-    [error, setError] = useState('');
+    [error, setError] = useState(''),
+    [parent, setParent] = useState<string | undefined>();
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get('reproduce');
+    if (!id) return;
+    const controller = new AbortController();
+    void fetch(`/api/findings/${encodeURIComponent(id)}`, {
+      signal: controller.signal,
+    })
+      .then(async (r) => {
+        if (!r.ok) throw Error('Could not load reproduction settings');
+        return r.json() as Promise<{
+          finding: {
+            id: string;
+            reproduce: {
+              status: number;
+              failures: number;
+              delay_seconds: number;
+              header_format: string;
+            };
+          };
+        }>;
+      })
+      .then(({ finding }) => {
+        setStatus(finding.reproduce.status);
+        setFailures(finding.reproduce.failures);
+        setDelay(finding.reproduce.delay_seconds);
+        setFormat(finding.reproduce.header_format);
+        setParent(finding.id);
+      })
+      .catch((e) => {
+        if (e.name !== 'AbortError') setError(String(e));
+      });
+    return () => controller.abort();
+  }, []);
   async function create(input?: {
     status: 503 | 429;
     failures: number;
@@ -105,6 +140,13 @@ export default function Home() {
       failures: z.number().int().min(1).max(4),
       delay_seconds: z.number().int().min(0).max(5),
       header_format: z.enum(['seconds', 'http-date']),
+      participant_token: z
+        .string()
+        .regex(/^[a-f0-9]{64}$/)
+        .optional()
+        .describe(
+          'Reuse an existing participant capability, preserving its activity cohort.',
+        ),
     });
     try {
       void Promise.resolve(
@@ -134,6 +176,7 @@ export default function Home() {
               });
               return {
                 run_id: data.run_id,
+                participant_token: data.participant_token,
                 probe_url: data.probe_url,
                 trace_url: data.trace_url,
                 expires_at: data.expires_at,
@@ -317,11 +360,14 @@ export default function Home() {
           {error}
         </p>
       )}
+      {run && attempts.length > 0 && (
+        <PublishRecord key={run.run_id} run={run} parent={parent} />
+      )}
       <div className="below">
         <div>
           <h3>Built for agents and developers</h3>
           <p>
-            Four MCP tools cover run creation, trace inspection, finding
+            Six MCP tools cover run creation, trace inspection, finding
             discovery and deliberate publication.
           </p>
           <Link prefetch={false} href="/protocol">

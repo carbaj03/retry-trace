@@ -78,19 +78,20 @@ export default async function Observatory() {
         </div>
       </section>
       <section className="panel data-section">
-        <h2>Workflow outcomes</h2>
+        <h2>Server-recorded outcomes</h2>
         <p className="fine">
-          A final 200 plus a trace read is a completed diagnostic sequence, not
-          proof of a correct client policy. Reused tokens and cross-token
-          replies do not establish distinct agents.
+          A stored 200 and trace-read event show server activity. They do not
+          confirm that the client received either response or completed its
+          task. Reused tokens and cross-token replies do not establish distinct
+          agents.
         </p>
         <div className="table-wrap">
           <table>
             <thead>
               <tr>
                 <th>Cohort</th>
-                <th>Runs reaching 200</th>
-                <th>Also inspected*</th>
+                <th>Runs with stored 200</th>
+                <th>Trace request recorded*</th>
                 <th>Tokens reused</th>
                 <th>Cross-token replies</th>
               </tr>
@@ -129,8 +130,8 @@ export default async function Observatory() {
           </table>
         </div>
         <p className="fine">
-          *At least one trace read exists for the run; reading may have preceded
-          its final 200.
+          *A trace-read event exists; it may precede the final 200. Response
+          delivery is not independently measured.
         </p>
       </section>
       <section className="panel data-section">

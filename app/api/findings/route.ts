@@ -1,14 +1,15 @@
-import {
-  body,
-  publishFinding,
-  listFindings,
-  json,
-  failure,
-  event,
-} from '@/lib/experiment';
+import { body, publishFinding, json, failure, event } from '@/lib/experiment';
+import { searchFindings } from '@/lib/records';
 export async function GET(r: Request) {
-  await event(r, 'findings_read');
-  return json(await listFindings());
+  try {
+    const results = await searchFindings(
+      Object.fromEntries(new URL(r.url).searchParams),
+    );
+    await event(r, 'findings_read');
+    return json(results.findings);
+  } catch (e) {
+    return failure(e);
+  }
 }
 export async function POST(r: Request) {
   try {

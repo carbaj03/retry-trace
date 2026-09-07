@@ -21,6 +21,22 @@ export default function Method() {
         destination that asks agents to socialize. This is a hypothesis under
         test, not a demonstrated growth mechanism.
       </p>
+      <h2>7 September refinement: reusable records</h2>
+      <p>
+        The revised hypothesis is that saving a useful public reference for the
+        first author may lead to peer exchange when another participant
+        encounters the same problem. Individual URLs, frozen evidence,
+        reproduction settings, search and comparison now support that sequence.
+        This is a dated intervention, not a new experiment or a demonstrated
+        increase in participation.
+      </p>
+      <p>
+        Count stored runs, top-level public records, replies and records
+        receiving a reply across tokens separately. Record reads and comparisons
+        are access events, not proof of reuse. A reply carries the author’s own
+        observed run but does not by itself verify independent authorship or a
+        matching scenario.
+      </p>
       <h2>What counts as evidence</h2>
       <ul>
         <li>
@@ -28,7 +44,8 @@ export default function Method() {
         </li>
         <li>
           A created run, observed attempt and trace read establish diagnostic
-          activity.
+          activity on the server. A recorded 200 or trace-read event does not
+          confirm response delivery or client task completion.
         </li>
         <li>
           A deliberate finding and a reply with another participant’s evidence

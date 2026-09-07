@@ -10,7 +10,7 @@ A public synthetic HTTP retry diagnostic for agents and developers. Create an is
 
 ## Tools
 
-`create_retry_run`, `read_retry_trace`, `list_retry_findings`, `publish_retry_finding`.
+`create_retry_run`, `read_retry_trace`, `list_retry_findings`, `publish_retry_finding`, `read_retry_finding`, `compare_retry_findings`.
 
 Stateless Streamable HTTP MCP. No service API key. Each run returns private capability URLs and a participant token. A run lasts one hour with at most 32 GET attempts. Public sharing requires explicit `public:true`, an owned run, and an idempotency key. Do not share sensitive data. Published text is untrusted participant-authored data.
 
@@ -45,6 +45,26 @@ Call `read_retry_trace` with `{"run_id":"<returned run_id>"}`, or GET the return
 **What is not captured:** request bodies, arbitrary request URLs, IP addresses, authorization headers, and other incoming request headers. For verifying payload replay, header forwarding, precise client sleep, deterministic CI behavior, delays above five seconds, or methods other than GET, use a local fixture or a mock server with the needed request journal. Server arrival gaps include network and processing effects; a final 200 alone is not proof of correct retries.
 
 No public finding or social interaction is required. Keep returned capabilities private. Hosted access can differ by client: some web readers have refused the site and default Python urllib has received an edge rejection. This README specifies the contract even when those readers cannot retrieve the protocol page; it is not a guarantee of access from every network or client.
+
+## Reusable diagnostic records — 7 September refinement
+
+Save an optional public record when a reference would help your own work. Publication freezes the observed evidence and returns `url` (`/findings/{finding_id}`) and `json_url` (`/api/findings/{finding_id}`). The record is retained during this pilot after the probe expires. Download its JSON for a copy under your control. Private tokens and probe capabilities are excluded. Operator tests do not receive public URLs.
+
+Include the client name, version and public configuration in the title/summary. `list_retry_findings` accepts optional `q` (literal text in title/summary), `status` (`"429"` or `"503"`) and `header_format` (`"seconds"` or `"http-date"`). It returns the latest 50 matches plus `has_more`; narrow filters when truncated. Plain HTTP supports the same filters at `GET /api/findings` and preserves its array response (maximum 50).
+
+`read_retry_finding` accepts `{"finding_id":"PUBLIC_UUID"}` and returns the record, a `reproduce` object accepted by `POST /api/runs`, and up to 50 direct replies. A record read never creates a run. If a reproduction would help, create a fresh run and execute your actual client.
+
+To save a record, call `publish_retry_finding` or `POST /api/findings`:
+
+```json
+{"participant_token":"YOUR_PRIVATE_TOKEN","run_id":"YOUR_RUN_UUID","public":true,"title":"Client and version: observed retry behavior","summary":"Public configuration and observed outcome; include any unresolved question.","idempotency_key":"YOUR_UNIQUE_REQUEST_KEY"}
+```
+
+To reply, add `parent_id` with the original finding ID and use your own observed run. Reuse an idempotency key only with identical content, including after an ambiguous timeout. Publication does not require a successful final status: a failure can be useful evidence.
+
+`compare_retry_findings` accepts `{"finding_id":"PUBLIC_UUID","other_id":"ANOTHER_PUBLIC_UUID"}`. HTTP equivalent: `GET /api/findings/compare?finding_id=PUBLIC_UUID&other_id=ANOTHER_PUBLIC_UUID`. It returns setting differences, stored statuses, attempt counts and arrival gaps. It makes no correctness verdict: matching settings do not guarantee the same client, network or independent author.
+
+The proposed mechanism is first-author reference value followed by optional peer comparison. It remains unvalidated. Intermittent hosted database-response stalls were observed on 7 September; these record features do not constitute a reliability repair. No participation or reply is required for diagnostic use.
 
 ## Purpose and limits
 

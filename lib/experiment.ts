@@ -1,5 +1,7 @@
 import { z } from 'zod';
 import { database, operatorToken } from '@/db';
+import { observeDatabase } from '@/lib/diagnostics';
+import { findingLinks } from '@/lib/records';
 export const ORIGIN = 'https://retry-trace.carbaj0.chatgpt.site';
 const token = z.string().regex(/^[a-f0-9]{64}$/);
 export const createSchema = z.object({
@@ -79,20 +81,22 @@ export async function event(
   group = cohort(r),
 ) {
   const at = new Date().toISOString();
-  await database()
-    .prepare(
-      'INSERT INTO events(id,at,kind,cohort,entity,referral) SELECT ?,?,?,?,?,? WHERE (SELECT COUNT(*) FROM events WHERE at>=?)<20000',
-    )
-    .bind(
-      crypto.randomUUID(),
-      at,
-      kind,
-      group,
-      entity,
-      referral(r),
-      at.slice(0, 10),
-    )
-    .run();
+  await observeDatabase('event.persist', () =>
+    database()
+      .prepare(
+        'INSERT INTO events(id,at,kind,cohort,entity,referral) SELECT ?,?,?,?,?,? WHERE (SELECT COUNT(*) FROM events WHERE at>=?)<20000',
+      )
+      .bind(
+        crypto.randomUUID(),
+        at,
+        kind,
+        group,
+        entity,
+        referral(r),
+        at.slice(0, 10),
+      )
+      .run(),
+  );
 }
 async function hash(s: string) {
   return [
@@ -113,10 +117,12 @@ export async function createRun(r: Request, input: unknown) {
     actor = await hash(participant),
     db = database(),
     now = new Date().toISOString();
-  let owner = await db
-    .prepare('SELECT id,cohort FROM actors WHERE id=?')
-    .bind(actor)
-    .first<{ id: string; cohort: string }>();
+  let owner = await observeDatabase('create.actor_lookup', () =>
+    db
+      .prepare('SELECT id,cohort FROM actors WHERE id=?')
+      .bind(actor)
+      .first<{ id: string; cohort: string }>(),
+  );
   if (a.participant_token && !owner)
     throw new AppError('Unknown participant token', 401);
   const group = owner?.cohort || cohort(r);
@@ -142,25 +148,27 @@ export async function createRun(r: Request, input: unknown) {
   }
   const id = crypto.randomUUID(),
     expires = new Date(Date.now() + 3600000).toISOString();
-  const saved = await db
-    .prepare(
-      'INSERT INTO runs(id,actor,cohort,status,failures,delay,format,attempts,created,expires) SELECT ?,?,?,?,?,?,?,0,?,? WHERE (SELECT COUNT(*) FROM runs WHERE created>=?)<1000 AND (SELECT COUNT(*) FROM runs WHERE actor=? AND expires>?)<20 RETURNING id',
-    )
-    .bind(
-      id,
-      actor,
-      group,
-      a.status,
-      a.failures,
-      a.delay_seconds,
-      a.header_format,
-      now,
-      expires,
-      now.slice(0, 10),
-      actor,
-      now,
-    )
-    .first();
+  const saved = await observeDatabase('create.persist_run', () =>
+    db
+      .prepare(
+        'INSERT INTO runs(id,actor,cohort,status,failures,delay,format,attempts,created,expires) SELECT ?,?,?,?,?,?,?,0,?,? WHERE (SELECT COUNT(*) FROM runs WHERE created>=?)<1000 AND (SELECT COUNT(*) FROM runs WHERE actor=? AND expires>?)<20 RETURNING id',
+      )
+      .bind(
+        id,
+        actor,
+        group,
+        a.status,
+        a.failures,
+        a.delay_seconds,
+        a.header_format,
+        now,
+        expires,
+        now.slice(0, 10),
+        actor,
+        now,
+      )
+      .first(),
+  );
   if (!saved)
     throw new AppError(
       'Run capacity reached: 20 active runs per participant; 1000 new runs per day',
@@ -183,10 +191,9 @@ export async function probe(r: Request, id: string) {
   if (!z.uuid().safeParse(id).success) throw new AppError('Unknown run', 404);
   const now = new Date().toISOString(),
     db = database(),
-    run = await db
-      .prepare('SELECT * FROM runs WHERE id=?')
-      .bind(id)
-      .first<Run>();
+    run = await observeDatabase('probe.run_lookup', () =>
+      db.prepare('SELECT * FROM runs WHERE id=?').bind(id).first<Run>(),
+    );
   if (!run) throw new AppError('Unknown run', 404);
   if (run.expires <= now) throw new AppError('Run expired', 410);
   const header =
@@ -195,18 +202,20 @@ export async function probe(r: Request, id: string) {
       : new Date(
           Math.floor(Date.parse(now) / 1000) * 1000 + run.delay * 1000,
         ).toUTCString();
-  const results = await db.batch([
-    db
-      .prepare(
-        'UPDATE runs SET attempts=attempts+1 WHERE id=? AND expires>? AND attempts<32 RETURNING attempts',
-      )
-      .bind(id, now),
-    db
-      .prepare(
-        'INSERT INTO attempts(id,run,sequence,received,status,retry_after) SELECT ?,id,attempts,?,CASE WHEN attempts<=failures THEN status ELSE 200 END,CASE WHEN attempts<=failures THEN ? ELSE NULL END FROM runs WHERE id=? AND expires>? AND attempts<=32 AND NOT EXISTS(SELECT 1 FROM attempts WHERE run=? AND sequence=runs.attempts) RETURNING sequence,status,retry_after',
-      )
-      .bind(crypto.randomUUID(), now, header, id, now, id),
-  ]);
+  const results = await observeDatabase('probe.persist_attempt', () =>
+    db.batch([
+      db
+        .prepare(
+          'UPDATE runs SET attempts=attempts+1 WHERE id=? AND expires>? AND attempts<32 RETURNING attempts',
+        )
+        .bind(id, now),
+      db
+        .prepare(
+          'INSERT INTO attempts(id,run,sequence,received,status,retry_after) SELECT ?,id,attempts,?,CASE WHEN attempts<=failures THEN status ELSE 200 END,CASE WHEN attempts<=failures THEN ? ELSE NULL END FROM runs WHERE id=? AND expires>? AND attempts<=32 AND NOT EXISTS(SELECT 1 FROM attempts WHERE run=? AND sequence=runs.attempts) RETURNING sequence,status,retry_after',
+        )
+        .bind(crypto.randomUUID(), now, header, id, now, id),
+    ]),
+  );
   const row = results[1].results[0] as
     | { sequence: number; status: number; retry_after: string | null }
     | undefined;
@@ -235,23 +244,24 @@ export async function probe(r: Request, id: string) {
 export async function readTrace(r: Request, input: unknown) {
   const a = traceSchema.parse(input),
     db = database(),
-    run = await db
-      .prepare('SELECT * FROM runs WHERE id=?')
-      .bind(a.run_id)
-      .first<Run>();
+    run = await observeDatabase('trace.run_lookup', () =>
+      db.prepare('SELECT * FROM runs WHERE id=?').bind(a.run_id).first<Run>(),
+    );
   if (!run) throw new AppError('Unknown run', 404);
   const list = (
-    await db
-      .prepare(
-        'SELECT sequence,received,status,retry_after FROM attempts WHERE run=? ORDER BY sequence',
-      )
-      .bind(run.id)
-      .all<{
-        sequence: number;
-        received: string;
-        status: number;
-        retry_after: string | null;
-      }>()
+    await observeDatabase('trace.attempts', () =>
+      db
+        .prepare(
+          'SELECT sequence,received,status,retry_after FROM attempts WHERE run=? ORDER BY sequence',
+        )
+        .bind(run.id)
+        .all<{
+          sequence: number;
+          received: string;
+          status: number;
+          retry_after: string | null;
+        }>(),
+    )
   ).results;
   await event(r, 'trace_read', run.id, run.cohort);
   return {
@@ -303,7 +313,11 @@ export async function publishFinding(r: Request, input: unknown) {
   if (existing) {
     if (existing.request_hash !== requestHash)
       throw new AppError('Idempotency key content conflict', 409);
-    return { finding_id: existing.id, replayed: true };
+    return {
+      finding_id: existing.id,
+      replayed: true,
+      ...findingLinks(existing.id, run.cohort),
+    };
   }
   if (a.parent_id) {
     const parent = await db
@@ -352,7 +366,11 @@ export async function publishFinding(r: Request, input: unknown) {
       .bind(actor, a.idempotency_key)
       .first<{ id: string; request_hash: string }>();
     if (won && won.request_hash === requestHash)
-      return { finding_id: won.id, replayed: true };
+      return {
+        finding_id: won.id,
+        replayed: true,
+        ...findingLinks(won.id, run.cohort),
+      };
     throw new AppError('Publication capacity or idempotency conflict', 409);
   }
   await event(
@@ -363,9 +381,8 @@ export async function publishFinding(r: Request, input: unknown) {
   );
   return {
     finding_id: id,
-    public: run.cohort !== 'operator',
-    operator_test: run.cohort === 'operator',
-    url: `${new URL(r.url).origin}/findings`,
+    replayed: false,
+    ...findingLinks(id, run.cohort),
     note: 'Participant-authored statement, unverified intent. The attached evidence is a server-observed synthetic trace.',
   };
 }
@@ -387,53 +404,49 @@ export async function listFindings() {
 }
 export async function stats() {
   const db = database();
+  const asOf = new Date().toISOString();
+  const snapshots = await observeDatabase('stats.snapshot', () =>
+    db.batch<Record<string, unknown>>([
+      db.prepare(
+        'SELECT cohort,kind,COUNT(*) count FROM events GROUP BY cohort,kind',
+      ),
+      db.prepare('SELECT cohort,COUNT(*) count FROM actors GROUP BY cohort'),
+      db.prepare(
+        'SELECT cohort,discovery,directed,COUNT(*) count FROM actors GROUP BY cohort,discovery,directed',
+      ),
+      db.prepare(
+        `SELECT cohort,COUNT(*) runs,SUM(EXISTS(SELECT 1 FROM attempts a WHERE a.run=r.id AND a.status=200)) reached_200,SUM(EXISTS(SELECT 1 FROM attempts a WHERE a.run=r.id AND a.status=200) AND EXISTS(SELECT 1 FROM events e WHERE e.entity=r.id AND e.kind='trace_read')) success_and_trace_read FROM runs r GROUP BY cohort`,
+      ),
+      db.prepare(
+        'SELECT cohort,COUNT(*) count FROM (SELECT actor,cohort FROM runs GROUP BY actor,cohort HAVING COUNT(*)>1) GROUP BY cohort',
+      ),
+      db.prepare(
+        'SELECT f.cohort,COUNT(*) count FROM findings f JOIN findings p ON f.parent=p.id WHERE f.actor<>p.actor GROUP BY f.cohort',
+      ),
+      db.prepare(
+        `SELECT f.cohort,SUM(f.parent IS NULL) roots,SUM(f.parent IS NOT NULL) replies,COUNT(DISTINCT f.actor) publishing_tokens,SUM(f.parent IS NULL AND EXISTS(SELECT 1 FROM findings reply WHERE reply.parent=f.id AND reply.actor<>f.actor AND reply.cohort=f.cohort)) roots_with_peer_reply FROM findings f GROUP BY f.cohort`,
+      ),
+    ]),
+  );
+  if (snapshots.length !== 7 || snapshots.some((result) => !result.success)) {
+    throw new Error('Statistics snapshot unavailable');
+  }
   return {
-    as_of: new Date().toISOString(),
+    as_of: asOf,
     experiment: 'retry-trace-005',
-    cohorts: (
-      await db
-        .prepare(
-          'SELECT cohort,kind,COUNT(*) count FROM events GROUP BY cohort,kind',
-        )
-        .all()
-    ).results,
-    actors: (
-      await db
-        .prepare('SELECT cohort,COUNT(*) count FROM actors GROUP BY cohort')
-        .all()
-    ).results,
-    discovery_claims: (
-      await db
-        .prepare(
-          'SELECT cohort,discovery,directed,COUNT(*) count FROM actors GROUP BY cohort,discovery,directed',
-        )
-        .all()
-    ).results,
-    workflow_outcomes: (
-      await db
-        .prepare(
-          `SELECT cohort,COUNT(*) runs,SUM(EXISTS(SELECT 1 FROM attempts a WHERE a.run=r.id AND a.status=200)) reached_200,SUM(EXISTS(SELECT 1 FROM attempts a WHERE a.run=r.id AND a.status=200) AND EXISTS(SELECT 1 FROM events e WHERE e.entity=r.id AND e.kind='trace_read')) success_and_trace_read FROM runs r GROUP BY cohort`,
-        )
-        .all()
-    ).results,
-    repeat_tokens: (
-      await db
-        .prepare(
-          'SELECT cohort,COUNT(*) count FROM (SELECT actor,cohort FROM runs GROUP BY actor,cohort HAVING COUNT(*)>1) GROUP BY cohort',
-        )
-        .all()
-    ).results,
-    cross_token_replies: (
-      await db
-        .prepare(
-          'SELECT f.cohort,COUNT(*) count FROM findings f JOIN findings p ON f.parent=p.id WHERE f.actor<>p.actor GROUP BY f.cohort',
-        )
-        .all()
-    ).results,
+    cohorts: snapshots[0].results,
+    actors: snapshots[1].results,
+    discovery_claims: snapshots[2].results,
+    workflow_outcomes: snapshots[3].results,
+    repeat_tokens: snapshots[4].results,
+    cross_token_replies: snapshots[5].results,
+    contribution_outcomes: snapshots[6].results,
+    record_workflow_revision: 'reusable-records-2026-09-07',
     independent_agents: null,
     independent_participation: null,
     limitations: [
       'Capability IDs are not unique agents or independent operators.',
+      'reached_200 and success_and_trace_read are server-recorded evidence, not confirmed delivery or client task completion. A trace-read event may precede the final 200.',
       'Discovery and direction fields are optional self-reports.',
       'Catalog scans are inferred from a claimed user-agent, not authenticated.',
       'Authenticated operator checks are excluded from unattributed counts. Untagged operator activity can remain unattributed.',
