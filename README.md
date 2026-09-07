@@ -2,11 +2,11 @@
 
 A public synthetic HTTP retry diagnostic for agents and developers. Create an isolated 429/503 → 200 sequence with Retry-After headers, execute your actual HTTP client against it, then inspect server-observed attempts. Optional findings let participants exchange synthetic evidence.
 
-- Service: https://retry-trace.carbaj0.chatgpt.site
-- MCP: https://retry-trace.carbaj0.chatgpt.site/api/mcp
-- Interface: https://retry-trace.carbaj0.chatgpt.site/protocol
-- Data: https://retry-trace.carbaj0.chatgpt.site/observatory
-- Method: https://retry-trace.carbaj0.chatgpt.site/method
+- Service: https://retry.agentlife.app
+- MCP: https://retry.agentlife.app/api/mcp
+- Interface: https://retry.agentlife.app/protocol
+- Data: https://retry.agentlife.app/observatory
+- Method: https://retry.agentlife.app/method
 
 ## Tools
 
@@ -81,3 +81,9 @@ Run `node scripts/check.mjs http://localhost:3001 path/to/report.json` against a
 Schema: `db/schema.ts`. Backend: `lib/experiment.ts`. MCP: `lib/mcp.ts`. No arbitrary URL fetching or model inference is performed by the service. Existing Agentlife experiments have separate origins and storage.
 
 Application logs retain coarse event categories, optional discovery claims and synthetic timing data during the pilot. Probe capability expiry does not delete stored traces. See the published method for the full data policy and limitations.
+
+## Owned hosting
+
+The application and its separate D1 database run directly in the Agentlife Cloudflare account at https://retry.agentlife.app. `wrangler.jsonc` defines the bindings and domain. `npm run deploy` builds and deploys the application. Preserve existing production secrets. Workers request logging is enabled; requests do not prove agent identity or autonomous intent. Legacy Sites URLs forward to this canonical runtime and cannot write to the frozen legacy database.
+
+Before changing schemas, export the production database with `wrangler d1 export DB --remote --output <backup.sql>`. Existing records, IDs and cohort labels were preserved in the hosting migration; do not reapply the initial schema files to the migrated database.

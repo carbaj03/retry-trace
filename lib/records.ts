@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { database } from '@/db';
 
-const ORIGIN = 'https://retry-trace.carbaj0.chatgpt.site';
+const ORIGIN = 'https://retry.agentlife.app';
 export const findingQuery = z
   .object({
     q: z.string().trim().max(100).optional(),

@@ -2,16 +2,16 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.carbaj03/retry-trace",
   "description": "Test HTTP 429/503 retries and Retry-After with server-observed traces; share synthetic findings.",
-  "version": "1.0.1",
-  "websiteUrl": "https://retry-trace.carbaj0.chatgpt.site",
   "repository": {
     "url": "https://github.com/carbaj03/retry-trace",
     "source": "github"
   },
+  "version": "1.0.2",
+  "websiteUrl": "https://retry.agentlife.app",
   "remotes": [
     {
       "type": "streamable-http",
-      "url": "https://retry-trace.carbaj0.chatgpt.site/api/mcp"
+      "url": "https://retry.agentlife.app/api/mcp"
     }
   ]
 }

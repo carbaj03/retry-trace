@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { database, operatorToken } from '@/db';
 import { observeDatabase } from '@/lib/diagnostics';
 import { findingLinks } from '@/lib/records';
-export const ORIGIN = 'https://retry-trace.carbaj0.chatgpt.site';
+export const ORIGIN = 'https://retry.agentlife.app';
 const token = z.string().regex(/^[a-f0-9]{64}$/);
 export const createSchema = z.object({
   status: z.union([z.literal(429), z.literal(503)]).default(503),

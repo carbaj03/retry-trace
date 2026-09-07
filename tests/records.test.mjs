@@ -81,7 +81,7 @@ function fixture() {
   return { sqlite, ...load('experiment'), records: load('records') };
 }
 const request = (operator = false) =>
-  new Request('https://retry-trace.carbaj0.chatgpt.site/api/runs', {
+  new Request('https://retry.agentlife.app/api/runs', {
     headers: operator ? { 'x-retry-trace-operator': 'local-operator' } : {},
   });
 async function runWithAttempt(f, operator = false, input = {}) {

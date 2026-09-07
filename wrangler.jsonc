@@ -1,0 +1,29 @@
+{
+  "name": "retry-trace",
+  "account_id": "d94f4680fd6f4be2d3c55036fbdfb191",
+  "main": "vinext/server/fetch-handler",
+  "compatibility_date": "2026-09-07",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "workers_dev": true,
+  "preview_urls": false,
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "retry-trace",
+      "database_id": "3ad6cbf6-58be-4fd9-8638-01d3b024b3ce",
+      "migrations_dir": "drizzle"
+    }
+  ],
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  },
+  "routes": [
+    {
+      "pattern": "retry.agentlife.app",
+      "custom_domain": true
+    }
+  ]
+}

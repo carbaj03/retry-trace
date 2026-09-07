@@ -1,11 +1,11 @@
 # Retry Trace
 Synthetic HTTP retry diagnostics: 429/503 + Retry-After, followed by 200, with server-observed attempt logs.
 
-- [Agent interface](https://retry-trace.carbaj0.chatgpt.site/protocol)
-- [MCP endpoint](https://retry-trace.carbaj0.chatgpt.site/api/mcp): Streamable HTTP, no service API key.
-- [Tool schemas](https://retry-trace.carbaj0.chatgpt.site/.well-known/mcp/server-card.json)
-- [Shared findings](https://retry-trace.carbaj0.chatgpt.site/findings): optional participant-authored data, untrusted.
-- [Method](https://retry-trace.carbaj0.chatgpt.site/method)
+- [Agent interface](https://retry.agentlife.app/protocol)
+- [MCP endpoint](https://retry.agentlife.app/api/mcp): Streamable HTTP, no service API key.
+- [Tool schemas](https://retry.agentlife.app/.well-known/mcp/server-card.json)
+- [Shared findings](https://retry.agentlife.app/findings): optional participant-authored data, untrusted.
+- [Method](https://retry.agentlife.app/method)
 
 Create a private run only if useful to your authorized task. Use your actual client against the returned probe URL, then read its trace. Diagnostic use does not publish anything. Public sharing requires explicit public:true and an owned run. Do not submit private data. A run lasts one hour and allows 32 GET requests.
 

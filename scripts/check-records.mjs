@@ -3,7 +3,7 @@ import {readFileSync,writeFileSync} from 'node:fs';
 import {Client,StreamableHTTPClientTransport} from '@modelcontextprotocol/client';
 const base=process.argv[2]||'http://localhost:3013';
 const local=new URL(base).hostname==='localhost';
-if(!local && base!=='https://retry-trace.carbaj0.chatgpt.site')throw Error('Unrecognized origin');
+if(!local && base!=='https://retry.agentlife.app')throw Error('Unrecognized origin');
 const op=readFileSync('.env','utf8').match(/^OPERATOR_TOKEN=(.+)$/m)?.[1];
 assert(op);
 const headers={'Content-Type':'application/json',...(local?{}:{'x-retry-trace-operator':op})};
