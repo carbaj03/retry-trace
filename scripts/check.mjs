@@ -44,8 +44,8 @@ await client.connect(
   }),
 );
 const listing = await client.listTools();
-assert.equal(listing.tools.length, 4);
-record('Official MCP client initializes and lists four tools');
+assert.equal(listing.tools.length, 6);
+record('Official MCP client initializes and lists six tools');
 async function tool(name, args = {}) {
   const r = await client.callTool({ name, arguments: args });
   assert(!r.isError, JSON.stringify(r));

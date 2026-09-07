@@ -20,6 +20,7 @@ function loadStats(db) {
   const module = { exports: {} };
   new Function('require', 'module', 'exports', compiled)(
     (name) => {
+      if (name === '@/lib/records') return {};
       if (name === '@/db') return { database: () => db };
       if (name === '@/lib/diagnostics')
         return { observeDatabase: (_step, operation) => operation() };
@@ -52,7 +53,7 @@ test('one read-only snapshot preserves distinct cohorts, workflows and replies',
       prepare: (sql) => ({ sql }),
       batch: async (statements) => {
         calls++;
-        assert.equal(statements.length, 6);
+        assert.equal(statements.length, 7);
         sqlite.exec('BEGIN');
         const results = statements.map(({ sql }) => {
           assert.match(sql, /^SELECT /);
@@ -105,7 +106,7 @@ test('failed or incomplete snapshots reject without zero substitution or retries
         calls++;
         if (mode === 'throw') throw new Error('Database unavailable');
         return Array.from(
-          { length: mode === 'incomplete' ? 5 : 6 },
+          { length: mode === 'incomplete' ? 6 : 7 },
           (_, i) => ({ success: mode !== 'failed' || i !== 2, results: [] }),
         );
       },

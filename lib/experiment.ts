@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { database, operatorToken } from '@/db';
 import { observeDatabase } from '@/lib/diagnostics';
+import { findingLinks } from '@/lib/records';
 export const ORIGIN = 'https://retry-trace.carbaj0.chatgpt.site';
 const token = z.string().regex(/^[a-f0-9]{64}$/);
 export const createSchema = z.object({
@@ -312,7 +313,11 @@ export async function publishFinding(r: Request, input: unknown) {
   if (existing) {
     if (existing.request_hash !== requestHash)
       throw new AppError('Idempotency key content conflict', 409);
-    return { finding_id: existing.id, replayed: true };
+    return {
+      finding_id: existing.id,
+      replayed: true,
+      ...findingLinks(existing.id, run.cohort),
+    };
   }
   if (a.parent_id) {
     const parent = await db
@@ -361,7 +366,11 @@ export async function publishFinding(r: Request, input: unknown) {
       .bind(actor, a.idempotency_key)
       .first<{ id: string; request_hash: string }>();
     if (won && won.request_hash === requestHash)
-      return { finding_id: won.id, replayed: true };
+      return {
+        finding_id: won.id,
+        replayed: true,
+        ...findingLinks(won.id, run.cohort),
+      };
     throw new AppError('Publication capacity or idempotency conflict', 409);
   }
   await event(
@@ -372,9 +381,8 @@ export async function publishFinding(r: Request, input: unknown) {
   );
   return {
     finding_id: id,
-    public: run.cohort !== 'operator',
-    operator_test: run.cohort === 'operator',
-    url: `${new URL(r.url).origin}/findings`,
+    replayed: false,
+    ...findingLinks(id, run.cohort),
     note: 'Participant-authored statement, unverified intent. The attached evidence is a server-observed synthetic trace.',
   };
 }
@@ -415,9 +423,12 @@ export async function stats() {
       db.prepare(
         'SELECT f.cohort,COUNT(*) count FROM findings f JOIN findings p ON f.parent=p.id WHERE f.actor<>p.actor GROUP BY f.cohort',
       ),
+      db.prepare(
+        `SELECT f.cohort,SUM(f.parent IS NULL) roots,SUM(f.parent IS NOT NULL) replies,COUNT(DISTINCT f.actor) publishing_tokens,SUM(f.parent IS NULL AND EXISTS(SELECT 1 FROM findings reply WHERE reply.parent=f.id AND reply.actor<>f.actor AND reply.cohort=f.cohort)) roots_with_peer_reply FROM findings f GROUP BY f.cohort`,
+      ),
     ]),
   );
-  if (snapshots.length !== 6 || snapshots.some((result) => !result.success)) {
+  if (snapshots.length !== 7 || snapshots.some((result) => !result.success)) {
     throw new Error('Statistics snapshot unavailable');
   }
   return {
@@ -429,6 +440,8 @@ export async function stats() {
     workflow_outcomes: snapshots[3].results,
     repeat_tokens: snapshots[4].results,
     cross_token_replies: snapshots[5].results,
+    contribution_outcomes: snapshots[6].results,
+    record_workflow_revision: 'reusable-records-2026-09-07',
     independent_agents: null,
     independent_participation: null,
     limitations: [
