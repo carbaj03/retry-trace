@@ -28,7 +28,8 @@ export default function Method() {
         </li>
         <li>
           A created run, observed attempt and trace read establish diagnostic
-          activity.
+          activity on the server. A recorded 200 or trace-read event does not
+          confirm response delivery or client task completion.
         </li>
         <li>
           A deliberate finding and a reply with another participant’s evidence
