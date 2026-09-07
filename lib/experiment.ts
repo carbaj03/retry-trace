@@ -396,49 +396,39 @@ export async function listFindings() {
 }
 export async function stats() {
   const db = database();
+  const asOf = new Date().toISOString();
+  const snapshots = await observeDatabase('stats.snapshot', () =>
+    db.batch<Record<string, unknown>>([
+      db.prepare(
+        'SELECT cohort,kind,COUNT(*) count FROM events GROUP BY cohort,kind',
+      ),
+      db.prepare('SELECT cohort,COUNT(*) count FROM actors GROUP BY cohort'),
+      db.prepare(
+        'SELECT cohort,discovery,directed,COUNT(*) count FROM actors GROUP BY cohort,discovery,directed',
+      ),
+      db.prepare(
+        `SELECT cohort,COUNT(*) runs,SUM(EXISTS(SELECT 1 FROM attempts a WHERE a.run=r.id AND a.status=200)) reached_200,SUM(EXISTS(SELECT 1 FROM attempts a WHERE a.run=r.id AND a.status=200) AND EXISTS(SELECT 1 FROM events e WHERE e.entity=r.id AND e.kind='trace_read')) success_and_trace_read FROM runs r GROUP BY cohort`,
+      ),
+      db.prepare(
+        'SELECT cohort,COUNT(*) count FROM (SELECT actor,cohort FROM runs GROUP BY actor,cohort HAVING COUNT(*)>1) GROUP BY cohort',
+      ),
+      db.prepare(
+        'SELECT f.cohort,COUNT(*) count FROM findings f JOIN findings p ON f.parent=p.id WHERE f.actor<>p.actor GROUP BY f.cohort',
+      ),
+    ]),
+  );
+  if (snapshots.length !== 6 || snapshots.some((result) => !result.success)) {
+    throw new Error('Statistics snapshot unavailable');
+  }
   return {
-    as_of: new Date().toISOString(),
+    as_of: asOf,
     experiment: 'retry-trace-005',
-    cohorts: (
-      await db
-        .prepare(
-          'SELECT cohort,kind,COUNT(*) count FROM events GROUP BY cohort,kind',
-        )
-        .all()
-    ).results,
-    actors: (
-      await db
-        .prepare('SELECT cohort,COUNT(*) count FROM actors GROUP BY cohort')
-        .all()
-    ).results,
-    discovery_claims: (
-      await db
-        .prepare(
-          'SELECT cohort,discovery,directed,COUNT(*) count FROM actors GROUP BY cohort,discovery,directed',
-        )
-        .all()
-    ).results,
-    workflow_outcomes: (
-      await db
-        .prepare(
-          `SELECT cohort,COUNT(*) runs,SUM(EXISTS(SELECT 1 FROM attempts a WHERE a.run=r.id AND a.status=200)) reached_200,SUM(EXISTS(SELECT 1 FROM attempts a WHERE a.run=r.id AND a.status=200) AND EXISTS(SELECT 1 FROM events e WHERE e.entity=r.id AND e.kind='trace_read')) success_and_trace_read FROM runs r GROUP BY cohort`,
-        )
-        .all()
-    ).results,
-    repeat_tokens: (
-      await db
-        .prepare(
-          'SELECT cohort,COUNT(*) count FROM (SELECT actor,cohort FROM runs GROUP BY actor,cohort HAVING COUNT(*)>1) GROUP BY cohort',
-        )
-        .all()
-    ).results,
-    cross_token_replies: (
-      await db
-        .prepare(
-          'SELECT f.cohort,COUNT(*) count FROM findings f JOIN findings p ON f.parent=p.id WHERE f.actor<>p.actor GROUP BY f.cohort',
-        )
-        .all()
-    ).results,
+    cohorts: snapshots[0].results,
+    actors: snapshots[1].results,
+    discovery_claims: snapshots[2].results,
+    workflow_outcomes: snapshots[3].results,
+    repeat_tokens: snapshots[4].results,
+    cross_token_replies: snapshots[5].results,
     independent_agents: null,
     independent_participation: null,
     limitations: [

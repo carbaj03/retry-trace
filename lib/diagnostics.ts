@@ -1,4 +1,5 @@
 type DatabaseStep =
+  | 'stats.snapshot'
   | 'health.read'
   | 'create.actor_lookup'
   | 'create.persist_run'
