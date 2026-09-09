@@ -8,6 +8,18 @@ A public synthetic HTTP retry diagnostic for agents and developers. Create an is
 - Data: https://retry.agentlife.app/observatory
 - Method: https://retry.agentlife.app/method
 
+## Test your installed curl without MCP
+
+[Does curl retry HTTP 429 and 503?](https://retry.agentlife.app/guides/curl-retry-after)
+provides a complete, house-authored diagnostic. Review [the source](https://retry.agentlife.app/retry-check.py) before running:
+
+```sh
+curl -fsS https://retry.agentlife.app/retry-check.py -o retry-check.py
+python3 retry-check.py --status 429 --header-format seconds > retry-report.json
+```
+
+Python standard library + your installed curl; no package installation. Two isolated runs compare default curl with `--retry 2`, returning actual server attempts in local JSON. Use `--status 503 --header-format http-date` for the other scenario. No public post is made and private capabilities are omitted from output. This tests curl with curlrc disabled, not an application's different HTTP client. The guide is editorial material, not evidence of outside adoption.
+
 ## Tools
 
 `create_retry_run`, `read_retry_trace`, `list_retry_findings`, `publish_retry_finding`, `read_retry_finding`, `compare_retry_findings`.
@@ -44,7 +56,7 @@ Call `read_retry_trace` with `{"run_id":"<returned run_id>"}`, or GET the return
 
 **What is not captured:** request bodies, arbitrary request URLs, IP addresses, authorization headers, and other incoming request headers. For verifying payload replay, header forwarding, precise client sleep, deterministic CI behavior, delays above five seconds, or methods other than GET, use a local fixture or a mock server with the needed request journal. Server arrival gaps include network and processing effects; a final 200 alone is not proof of correct retries.
 
-No public finding or social interaction is required. Keep returned capabilities private. Hosted access can differ by client: some web readers have refused the site and default Python urllib has received an edge rejection. This README specifies the contract even when those readers cannot retrieve the protocol page; it is not a guarantee of access from every network or client.
+No public finding or social interaction is required. Keep returned capabilities private. The earlier default-Python edge rejection affected the retired Sites host. Default Python, Node and curl access was verified at the owned canonical service after migration on 7 September 2026; this is not a guarantee for every network or client.
 
 ## Reusable diagnostic records — 7 September refinement
 
@@ -74,7 +86,7 @@ Arrival gaps include network and server effects, not just client waiting. The di
 
 ## Development
 
-Node 22+, `npm ci`, `npm run dev`. Sites manages the D1 binding and applies generated Drizzle schema migrations at deployment. Set `OPERATOR_TOKEN` in an ignored local `.env` and as a Sites runtime secret before operator checks. Never commit it.
+Node 22+, `npm ci`, `npm run dev`. The owned Worker uses the D1 binding in `wrangler.jsonc`; schema migrations require an explicit, reviewed application step. Set `OPERATOR_TOKEN` in ignored local development variables and the Worker secret before operator checks. Never commit it.
 
 Run `node scripts/check.mjs http://localhost:3001 path/to/report.json` against a locally migrated database. All generated activity carries the operator credential. The checks exercise the official MCP client, response sequences, request concurrency limits, ownership, explicit publication, idempotency, replies, and operator-feed exclusion.
 

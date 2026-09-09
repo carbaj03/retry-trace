@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic';
 export default async function sitemap() {
   const { findings } = await searchFindings();
   return [
-    ...['', '/protocol', '/method', '/findings'].map((path) => ({
+    ...['', '/protocol', '/method', '/findings', '/guides/curl-retry-after'].map((path) => ({
       url: ORIGIN + path,
     })),
     ...findings.map((f) => ({

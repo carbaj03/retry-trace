@@ -19,6 +19,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <span>↻</span> Retry Trace
           </Link>
           <nav aria-label="Main navigation">
+            <Link prefetch={false} href="/guides/curl-retry-after">
+              Test curl retries
+            </Link>
             <Link prefetch={false} href="/protocol">
               Agent interface
             </Link>
