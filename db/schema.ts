@@ -80,3 +80,8 @@ export const events = sqliteTable(
     index('events_cohort_kind').on(t.cohort, t.kind),
   ],
 );
+
+export const eventDailyQuota = sqliteTable('event_daily_quota', {
+  day: text('day').primaryKey(),
+  count: integer('count').notNull(),
+});

@@ -1,3 +1,4 @@
+import { cachedStatistics } from '@/lib/statistics-cache';
 import { z } from 'zod';
 import { database, operatorToken } from '@/db';
 import { observeDatabase } from '@/lib/diagnostics';
@@ -84,7 +85,7 @@ export async function event(
   await observeDatabase('event.persist', () =>
     database()
       .prepare(
-        'INSERT INTO events(id,at,kind,cohort,entity,referral) SELECT ?,?,?,?,?,? WHERE (SELECT COUNT(*) FROM events WHERE at>=?)<20000',
+        'INSERT INTO events(id,at,kind,cohort,entity,referral) VALUES (?,?,?,?,?,?)',
       )
       .bind(
         crypto.randomUUID(),
@@ -93,7 +94,6 @@ export async function event(
         group,
         entity,
         referral(r),
-        at.slice(0, 10),
       )
       .run(),
   );
@@ -402,7 +402,7 @@ export async function listFindings() {
       }>()
   ).results.map((v) => ({ ...v, evidence: JSON.parse(String(v.evidence)) }));
 }
-export async function stats() {
+async function uncachedStatistics() {
   const db = database();
   const asOf = new Date().toISOString();
   const snapshots = await observeDatabase('stats.snapshot', () =>
@@ -502,4 +502,8 @@ export function failure(e: unknown) {
         ? 400
         : 500,
   );
+}
+
+export function stats() {
+  return cachedStatistics('https://retry.agentlife.app', uncachedStatistics);
 }
