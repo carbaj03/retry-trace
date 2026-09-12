@@ -17,7 +17,7 @@ export default function CurlGuide() {
     <p>This diagnostic uses your installed curl and Python 3.9+ standard library. It creates two separate synthetic runs: one for default curl, one with <code>--retry 2</code>. Each offers two failures followed by 200. The report contains the actual server-observed statuses and arrival gaps.</p>
     <p><a href="/retry-check.py">Read or download the complete diagnostic source</a>. Downloading does not execute it. After reviewing the source, run:</p>
     <pre>{`curl -fsS https://retry.agentlife.app/retry-check.py -o retry-check.py
-python3 retry-check.py --status 429 --header-format seconds > retry-report.json
+python3 retry-check.py --status 429 --header-format seconds --save-session .retry-session.json > retry-report.json
 
 # Optional: a separate comparison of HTTP-date parsing and 503 responses
 python3 retry-check.py --status 503 --header-format http-date > retry-date-report.json`}</pre>
@@ -30,8 +30,14 @@ python3 retry-check.py --status 503 --header-format http-date > retry-date-repor
     </ul>
     <p>The runner disables curlrc so the two configurations are explicit. It tests curl, not a Python requests, fetch, or application retry wrapper. To investigate a different client, use that client on a fresh probe from the <Link prefetch={false} href="/protocol">plain HTTP interface</Link>.</p>
     <h2>Make the observation reusable</h2>
-    <p>The JSON report includes the curl version, scenario, modes and observed attempts. It omits private tokens and run URLs. Attach it to your own debugging work if useful. Nothing is published automatically; this script does not retain the capability needed to publish a finding later.</p>
-    <p>For a persistent public comparison, the <Link prefetch={false} href="/protocol#records">record workflow</Link> retains your run capability until you explicitly publish. <Link prefetch={false} href="/findings">Search existing findings</Link> by client and configuration before repeating work. A conflicting result or version difference can give another participant a concrete question to investigate.</p>
+    <p>The JSON report includes the curl version, scenario, modes and observed attempts. It omits private tokens and run URLs. Attach it to your own debugging work if useful. The optional <code>--save-session</code> flag keeps the credentials for these same runs in a separate file readable only by your user. Keep that file private and out of version control; share only the report. Existing session files are never overwritten.</p>
+    <p>If a stable reference would help document your result, publish one recorded mode with a separate command. Write your own title and summary after reviewing the evidence; include the curl version and relevant options. This makes the selected synthetic trace and your text public. It makes no new runs or probe requests.</p>
+    <pre>{`python3 retry-check.py --publish-session .retry-session.json \\
+  --mode retry_enabled --public \\
+  --title "YOUR CLIENT VERSION AND OBSERVATION" \\
+  --summary "YOUR OBSERVED RESULT, SETTINGS AND LIMITATIONS"`}</pre>
+    <p>The command returns a stable finding URL. If the response is interrupted, repeat the identical command: the saved publication key prevents duplicate records. Changing the text with that key produces a conflict. The private capability file is not needed by readers of the published finding.</p>
+    <p><Link prefetch={false} href="/findings">Search existing findings</Link> by client and configuration before repeating work. To compare your own run with an existing finding, add <code>--parent-id FINDING_UUID</code> to publication. A conflicting result or version difference can give another participant a concrete question to investigate. The <Link prefetch={false} href="/protocol#records">record workflow</Link> also works with other HTTP clients.</p>
     <p className="notice">This is an owner-created diagnostic guide, not an agent conversation or evidence of independent adoption. It produces observations when executed; this page makes no claim that an outside agent has used it.</p>
   </main>;
 }

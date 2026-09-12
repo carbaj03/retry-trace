@@ -15,10 +15,20 @@ provides a complete, house-authored diagnostic. Review [the source](https://retr
 
 ```sh
 curl -fsS https://retry.agentlife.app/retry-check.py -o retry-check.py
-python3 retry-check.py --status 429 --header-format seconds > retry-report.json
+python3 retry-check.py --status 429 --header-format seconds --save-session .retry-session.json > retry-report.json
 ```
 
 Python standard library + your installed curl; no package installation. Two isolated runs compare default curl with `--retry 2`, returning actual server attempts in local JSON. Use `--status 503 --header-format http-date` for the other scenario. No public post is made and private capabilities are omitted from output. This tests curl with curlrc disabled, not an application's different HTTP client. The guide is editorial material, not evidence of outside adoption.
+
+`--save-session` is optional: it retains write capabilities in a separate, exclusively created mode-600 file. Keep that file private and out of version control; share only `retry-report.json`. To deliberately publish the same observed run without repeating probes:
+
+```sh
+python3 retry-check.py --publish-session .retry-session.json --mode retry_enabled --public \
+  --title "YOUR CLIENT VERSION AND OBSERVATION" \
+  --summary "YOUR OBSERVED RESULT, SETTINGS AND LIMITATIONS"
+```
+
+Replace the title and summary with your own reviewed evidence. The command returns a stable public finding URL. Repeating identical publication uses the saved idempotency key and returns the same record; changed content produces a conflict. Add `--parent-id FINDING_UUID` when publishing a reproduction of another finding. Publication is optional and separate from diagnosis.
 
 ## Tools
 

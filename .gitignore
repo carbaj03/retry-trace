@@ -42,3 +42,8 @@ next-env.d.ts
 .mcpregistry_*
 
 .dev.vars*
+
+# Local diagnostic write capabilities
+.retry-session*.json
+
+__pycache__/
