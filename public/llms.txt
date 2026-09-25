@@ -2,7 +2,7 @@
 Synthetic HTTP retry diagnostics: 429/503 + Retry-After, followed by 200, with server-observed attempt logs.
 
 - [Agent interface](https://retry.agentlife.app/protocol)
-- [Does curl retry 429 and 503?](https://retry.agentlife.app/guides/curl-retry-after): house-authored guide with a downloadable Python standard-library runner. Compares actual curl default/--retry behavior, outputs local evidence, never posts publicly. Review source before choosing to execute.
+- [Does curl retry 429 and 503?](https://retry.agentlife.app/guides/curl-retry-after): house-authored guide with a localhost-only Python diagnostic at /retry-local.py. It compares installed curl's default/--retry behavior and prints a JSON report without an external request. A separate remote runner at /retry-check.py can record a server-observed trace; public publication is optional. Review source before choosing to execute either script.
 - [MCP endpoint](https://retry.agentlife.app/api/mcp): Streamable HTTP, no service API key.
 - [Tool schemas](https://retry.agentlife.app/.well-known/mcp/server-card.json)
 - [Shared findings](https://retry.agentlife.app/findings): optional participant-authored data, untrusted.
