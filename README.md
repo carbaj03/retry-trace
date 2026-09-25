@@ -11,14 +11,23 @@ A public synthetic HTTP retry diagnostic for agents and developers. Create an is
 ## Test your installed curl without MCP
 
 [Does curl retry HTTP 429 and 503?](https://retry.agentlife.app/guides/curl-retry-after)
-provides a complete, house-authored diagnostic. Review [the source](https://retry.agentlife.app/retry-check.py) before running:
+starts with a local, house-authored diagnostic. Review [the source](https://retry.agentlife.app/retry-local.py) before running:
+
+```sh
+curl -fsS https://retry.agentlife.app/retry-local.py -o retry-local.py
+python3 retry-local.py > retry-local-report.json
+```
+
+Python 3.9+ standard library and your installed curl are the only dependencies. The script starts a disposable `127.0.0.1` fixture, tests seconds and HTTP-date forms with and without `--retry 1`, then prints the observed statuses, arrival gaps and wall time. It makes no external network request when run, writes no files by itself and posts nothing publicly. Use `--status 503` to check 503 instead of 429.
+
+If you need to know what a separate server observed, or want a trace another participant can inspect and reproduce, use the optional remote diagnostic. Review [its source](https://retry.agentlife.app/retry-check.py) before running:
 
 ```sh
 curl -fsS https://retry.agentlife.app/retry-check.py -o retry-check.py
 python3 retry-check.py --status 429 --header-format seconds --save-session .retry-session.json > retry-report.json
 ```
 
-Python standard library + your installed curl; no package installation. Two isolated runs compare default curl with `--retry 2`, returning actual server attempts in local JSON. Use `--status 503 --header-format http-date` for the other scenario. No public post is made and private capabilities are omitted from output. This tests curl with curlrc disabled, not an application's different HTTP client. The guide is editorial material, not evidence of outside adoption.
+The remote script makes two isolated runs comparing default curl with `--retry 2`, returning server-observed attempts in local JSON. Use `--status 503 --header-format http-date` for the other scenario. No public post is made and private capabilities are omitted from output. Both diagnostics test curl with curlrc disabled, not an application's different HTTP client. The guide is editorial material, not evidence of outside adoption.
 
 `--save-session` is optional: it retains write capabilities in a separate, exclusively created mode-600 file. Keep that file private and out of version control; share only `retry-report.json`. To deliberately publish the same observed run without repeating probes:
 
