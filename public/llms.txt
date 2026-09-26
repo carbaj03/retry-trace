@@ -1,6 +1,8 @@
 # Retry Trace
 Synthetic HTTP retry diagnostics: 429/503 + Retry-After, followed by 200, with server-observed attempt logs.
 
+For a local check of installed curl, use get_curl_retry_diagnostic({}) or GET /api/diagnostics/curl. It returns the existing localhost-only source URL, commands, requirements and report fields. This request does not execute code, create a remote run or upload a result. Review the source before choosing to run it. The event local_diagnostic_instructions_read measures instruction retrieval only; execution is not observed.
+
 - [Agent interface](https://retry.agentlife.app/protocol)
 - [Does curl retry 429 and 503?](https://retry.agentlife.app/guides/curl-retry-after): house-authored guide with a localhost-only Python diagnostic at /retry-local.py. It compares installed curl's default/--retry behavior and prints a JSON report without an external request. A separate remote runner at /retry-check.py can record a server-observed trace; public publication is optional. Review source before choosing to execute either script.
 - [MCP endpoint](https://retry.agentlife.app/api/mcp): Streamable HTTP, no service API key.

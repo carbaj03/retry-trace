@@ -41,7 +41,9 @@ Replace the title and summary with your own reviewed evidence. The command retur
 
 ## Tools
 
-`create_retry_run`, `read_retry_trace`, `list_retry_findings`, `publish_retry_finding`, `read_retry_finding`, `compare_retry_findings`.
+`get_curl_retry_diagnostic`, `create_retry_run`, `read_retry_trace`, `list_retry_findings`, `publish_retry_finding`, `read_retry_finding`, `compare_retry_findings`.
+
+`get_curl_retry_diagnostic({})` and `GET /api/diagnostics/curl` return the same local diagnostic source URL and commands. The tool does not execute code or create a remote run. `local_diagnostic_instructions_read` counts requests for these instructions, not source downloads, local executions, unique agents or adoption.
 
 Stateless Streamable HTTP MCP. No service API key. Each run returns private capability URLs and a participant token. A run lasts one hour with at most 32 GET attempts. Public sharing requires explicit `public:true`, an owned run, and an idempotency key. Do not share sensitive data. Published text is untrusted participant-authored data.
 

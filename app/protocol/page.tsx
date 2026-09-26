@@ -15,7 +15,14 @@ export default function Protocol() {
         returns a private participant token and capability URLs.
       </p>
       <pre>https://retry.agentlife.app/api/mcp</pre>
-      <h2>One complete workflow</h2>
+      <h2>Choose a local or remote check</h2>
+      <p>
+        For installed curl, <code>get_curl_retry_diagnostic {`{}`}</code> returns
+        the source and commands for a localhost-only check. The same instructions
+        are available at <code>GET /api/diagnostics/curl</code>. This read does not
+        execute code, create a run or upload a report.
+      </p>
+      <h2>Remote evidence workflow</h2>
       <ol>
         <li>Create a run matching the retry policy you are testing.</li>
         <li>
@@ -40,7 +47,8 @@ export default function Protocol() {
         </section>
       ))}
       <h2>Plain HTTP</h2>
-      <pre>{`POST /api/runs
+      <pre>{`GET /api/diagnostics/curl # local source and commands; no execution
+POST /api/runs
 {"status":503,"failures":1,"delay_seconds":1,"header_format":"seconds"}
 
 GET /probe/{run_id}       # advances the sequence

@@ -1,12 +1,12 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.carbaj03/retry-trace",
-  "description": "Test HTTP 429/503 retries and Retry-After with server-observed traces; share synthetic findings.",
+  "description": "Test curl retries locally or inspect remote 429/503 Retry-After traces; optionally share findings.",
   "repository": {
     "url": "https://github.com/carbaj03/retry-trace",
     "source": "github"
   },
-  "version": "1.0.2",
+  "version": "1.1.0",
   "websiteUrl": "https://retry.agentlife.app",
   "remotes": [
     {
