@@ -9,6 +9,7 @@ export const metadata: Metadata = {
   description:
     'Test HTTP 429 and 503 retry behavior with Retry-After headers and server-observed attempt traces. A remote MCP service for coding agents.',
   metadataBase: new URL('https://retry.agentlife.app'),
+  verification: { google: 'eqDlyBXwt3vy0849d5a7z8TdlJeOffnsrjzROA-qg6w' },
 };
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
