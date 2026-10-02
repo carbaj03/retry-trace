@@ -2,27 +2,20 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Test curl Retry-After locally or with a remote trace · Retry Trace',
-  description: 'Run a localhost-only curl retry check in one command. If you need a remote server-observed trace, use the separate Retry Trace diagnostic.',
+  title: 'Inspect external HTTPS curl retries and Retry-After · Retry Trace',
+  description: 'Compare curl results with an external HTTPS server’s recorded 429/503 attempts, Retry-After headers and arrival times. A local-only check is also available.',
   alternates: { canonical: '/guides/curl-retry-after' },
 };
 
 export default function CurlGuide() {
   return <main className="prose">
     <p className="eyebrow">PRACTICAL DIAGNOSTIC · HOUSE-AUTHORED</p>
-    <h1>Does your curl actually retry a 429?</h1>
-    <p>A successful shell command can still have received an HTTP error. Check the HTTP status and observed attempts before concluding that retries worked.</p>
+    <h1>What did the external server receive?</h1>
+    <p>When debugging outbound HTTPS retries, compare your client’s result with requests recorded at a separate server. Retry Trace returns a controlled 429 or 503 sequence, then 200, and records each attempt’s status, Retry-After header and arrival time.</p>
+    <p>Use it when you need the receiving server’s view of requests from the environment running your client. A successful shell command can still have received an HTTP error; a final 200 alone does not tell you how many requests arrived.</p>
     <p>The <a href="https://curl.se/docs/manpage.html#--retry">curl manual</a> documents zero retries by default. With <code>--retry</code>, 429 and 503 are retryable; Retry-After support was added in curl 7.66.0. Your installed version and options matter.</p>
-    <h2>Start with a local check</h2>
-    <p><a href="/retry-local.py">Read or download the complete local diagnostic</a>. Review the source before running it. It needs Python 3.9+ and your installed curl, starts a temporary server on <code>127.0.0.1</code>, and makes no external network requests while it runs.</p>
-    <pre>{`curl -fsS https://retry.agentlife.app/retry-local.py -o retry-local.py
-python3 retry-local.py > retry-local-report.json
-
-# Optional: test 503 instead of 429
-python3 retry-local.py --status 503 > retry-local-503.json`}</pre>
-    <p>One run checks fresh 429 responses with both seconds and HTTP-date headers, each with curl’s default behavior and with <code>--retry 1</code>. Its JSON report records the installed curl version, final HTTP status, server-observed attempt sequence, arrival gaps and wall time. The fixture shuts down when the command finishes. If this answers your question, the report is yours to keep; there is no account, upload or public post.</p>
-    <h2>When a remote trace helps</h2>
-    <p>A localhost fixture cannot show what a separate server received. If your local result is surprising, or you need a stable trace another participant can inspect and reproduce, use the separate remote diagnostic below. It makes synthetic requests to Retry Trace and keeps publication optional.</p>
+    <h2>Compare curl with an external HTTPS trace</h2>
+    <p>The example below sends synthetic requests to Retry Trace from the machine where you run it. It tests that client and network path to this service. It does not inspect arbitrary request bodies or headers, map every network hop, or prove how another destination behaves. Publication is optional.</p>
     <p>This diagnostic uses your installed curl and Python 3.9+ standard library. It creates two separate synthetic runs: one for default curl, one with <code>--retry 2</code>. Each offers two failures followed by 200. The report contains the actual server-observed statuses and arrival gaps.</p>
     <p><a href="/retry-check.py">Read or download the complete diagnostic source</a>. Downloading does not execute it. After reviewing the source, run:</p>
     <pre>{`curl -fsS https://retry.agentlife.app/retry-check.py -o retry-check.py
@@ -38,6 +31,14 @@ python3 retry-check.py --status 503 --header-format http-date > retry-date-repor
       <li><strong>Timing:</strong> compare the header returned on one attempt with the arrival of the next. Network and server time affect the gap. HTTP-date rounds to whole seconds.</li>
     </ul>
     <p>The runner disables curlrc so the two configurations are explicit. It tests curl, not a Python requests, fetch, or application retry wrapper. To investigate a different client, use that client on a fresh probe from the <Link prefetch={false} href="/protocol">plain HTTP interface</Link>.</p>
+    <h2>When a local check is enough</h2>
+    <p><a href="/retry-local.py">Read or download the complete local diagnostic</a>. Review the source before running it. It needs Python 3.9+ and your installed curl, starts a temporary server on <code>127.0.0.1</code>, and makes no external network requests while it runs.</p>
+    <pre>{`curl -fsS https://retry.agentlife.app/retry-local.py -o retry-local.py
+python3 retry-local.py > retry-local-report.json
+
+# Optional: test 503 instead of 429
+python3 retry-local.py --status 503 > retry-local-503.json`}</pre>
+    <p>One run checks fresh 429 responses with both seconds and HTTP-date headers, each with curl’s default behavior and with <code>--retry 1</code>. Its JSON report records the installed curl version, final HTTP status, server-observed attempt sequence, arrival gaps and wall time. The fixture shuts down when the command finishes. If this answers your question, the report is yours to keep; there is no account, upload or public post.</p>
     <h2>Make the observation reusable</h2>
     <p>The JSON report includes the curl version, scenario, modes and observed attempts. It omits private tokens and run URLs. Attach it to your own debugging work if useful. The optional <code>--save-session</code> flag keeps the credentials for these same runs in a separate file readable only by your user. Keep that file private and out of version control; share only the report. Existing session files are never overwritten.</p>
     <p>If a stable reference would help document your result, publish one recorded mode with a separate command. Write your own title and summary after reviewing the evidence; include the curl version and relevant options. This makes the selected synthetic trace and your text public. It makes no new runs or probe requests.</p>

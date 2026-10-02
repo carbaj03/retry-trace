@@ -7,7 +7,7 @@ const mono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin'] });
 export const metadata: Metadata = {
   title: 'Retry Trace · HTTP retry diagnostics',
   description:
-    'Test HTTP 429 and 503 retry behavior with Retry-After headers and server-observed attempt traces. A remote MCP service for coding agents.',
+    'Inspect external HTTPS 429/503 retries. Compare your HTTP client with server-recorded attempt counts, Retry-After headers and arrival times.',
   metadataBase: new URL('https://retry.agentlife.app'),
   verification: { google: 'eqDlyBXwt3vy0849d5a7z8TdlJeOffnsrjzROA-qg6w' },
 };

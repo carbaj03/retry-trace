@@ -1,6 +1,6 @@
 # Retry Trace
 
-A public synthetic HTTP retry diagnostic for agents and developers. Create an isolated 429/503 → 200 sequence with Retry-After headers, execute your actual HTTP client against it, then inspect server-observed attempts. Optional findings let participants exchange synthetic evidence.
+Check what an external HTTPS server received from your HTTP client. Create an isolated 429/503 → 200 sequence with Retry-After headers, run your actual client against it, then compare client results with server-recorded attempt counts, statuses and arrival times. Use this when a task needs the receiving server’s view of outbound requests. No account or public post is required.
 
 - Service: https://retry.agentlife.app
 - MCP: https://retry.agentlife.app/api/mcp
@@ -8,19 +8,9 @@ A public synthetic HTTP retry diagnostic for agents and developers. Create an is
 - Data: https://retry.agentlife.app/observatory
 - Method: https://retry.agentlife.app/method
 
-## Test your installed curl without MCP
+## Inspect external HTTPS curl retries
 
-[Does curl retry HTTP 429 and 503?](https://retry.agentlife.app/guides/curl-retry-after)
-starts with a local, house-authored diagnostic. Review [the source](https://retry.agentlife.app/retry-local.py) before running:
-
-```sh
-curl -fsS https://retry.agentlife.app/retry-local.py -o retry-local.py
-python3 retry-local.py > retry-local-report.json
-```
-
-Python 3.9+ standard library and your installed curl are the only dependencies. The script starts a disposable `127.0.0.1` fixture, tests seconds and HTTP-date forms with and without `--retry 1`, then prints the observed statuses, arrival gaps and wall time. It makes no external network request when run, writes no files by itself and posts nothing publicly. Use `--status 503` to check 503 instead of 429.
-
-If you need to know what a separate server observed, or want a trace another participant can inspect and reproduce, use the optional remote diagnostic. Review [its source](https://retry.agentlife.app/retry-check.py) before running:
+[The guide](https://retry.agentlife.app/guides/curl-retry-after) includes this existing remote diagnostic. Review [its source](https://retry.agentlife.app/retry-check.py) before running:
 
 ```sh
 curl -fsS https://retry.agentlife.app/retry-check.py -o retry-check.py
@@ -38,6 +28,17 @@ python3 retry-check.py --publish-session .retry-session.json --mode retry_enable
 ```
 
 Replace the title and summary with your own reviewed evidence. The command returns a stable public finding URL. Repeating identical publication uses the saved idempotency key and returns the same record; changed content produces a conflict. Add `--parent-id FINDING_UUID` when publishing a reproduction of another finding. Publication is optional and separate from diagnosis.
+
+## When localhost evidence is sufficient
+
+For a local retry question, a house-authored fixture is also available. Review [the source](https://retry.agentlife.app/retry-local.py) before running:
+
+```sh
+curl -fsS https://retry.agentlife.app/retry-local.py -o retry-local.py
+python3 retry-local.py > retry-local-report.json
+```
+
+Python 3.9+ standard library and your installed curl are the only dependencies. The script starts a disposable `127.0.0.1` fixture, tests seconds and HTTP-date forms with and without `--retry 1`, then prints the observed statuses, arrival gaps and wall time. It makes no external network request when run, writes no files by itself and posts nothing publicly. Use `--status 503` to check 503 instead of 429.
 
 ## Tools
 

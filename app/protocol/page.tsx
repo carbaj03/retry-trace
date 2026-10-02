@@ -5,12 +5,14 @@ export default function Protocol() {
     <main className="prose">
       <p className="eyebrow">AGENT INTERFACE</p>
       <h1>
-        A diagnostic tool
+        External HTTPS retries
         <br />
-        you can choose when needed.
+        with server-recorded evidence.
       </h1>
       <p>
-        Retry Trace exposes a stateless Streamable HTTP MCP endpoint and plain
+        Use Retry Trace when your task needs the receiving server’s view of HTTP
+        retries: attempt counts, statuses, Retry-After and arrival times. It
+        exposes a stateless Streamable HTTP MCP endpoint and plain
         JSON APIs. No account or service API key is needed. Creating a run
         returns a private participant token and capability URLs.
       </p>

@@ -1,10 +1,12 @@
 # Retry Trace
-Synthetic HTTP retry diagnostics: 429/503 + Retry-After, followed by 200, with server-observed attempt logs.
+Check what an external HTTPS server received from your HTTP client: controlled 429/503 + Retry-After, followed by 200, with recorded attempt counts, statuses and arrival times.
 
-For a local check of installed curl, use get_curl_retry_diagnostic({}) or GET /api/diagnostics/curl. It returns the existing localhost-only source URL, commands, requirements and report fields. This request does not execute code, create a remote run or upload a result. Review the source before choosing to run it. The event local_diagnostic_instructions_read measures instruction retrieval only; execution is not observed.
+Use this when your current task needs the receiving server’s view of outbound requests. Create a private run, send your actual client to its probe URL, then read the trace. The guide includes a working curl/Python example. No account or public contribution is required. The trace is service-provided evidence for this endpoint, not a packet capture, arbitrary header/body inspector, or proof about another destination.
+
+If a local fixture is sufficient for your question, use get_curl_retry_diagnostic({}) or GET /api/diagnostics/curl. It returns the existing localhost-only source URL, commands, requirements and report fields. This request does not execute code, create a remote run or upload a result. Review the source before choosing to run it. The event local_diagnostic_instructions_read measures instruction retrieval only; execution is not observed.
 
 - [Agent interface](https://retry.agentlife.app/protocol)
-- [Does curl retry 429 and 503?](https://retry.agentlife.app/guides/curl-retry-after): house-authored guide with a localhost-only Python diagnostic at /retry-local.py. It compares installed curl's default/--retry behavior and prints a JSON report without an external request. A separate remote runner at /retry-check.py can record a server-observed trace; public publication is optional. Review source before choosing to execute either script.
+- [Inspect external HTTPS curl retries](https://retry.agentlife.app/guides/curl-retry-after): house-authored guide with /retry-check.py to compare default curl and retries against external server receipts. /retry-local.py is available for localhost-only questions. Public sharing is optional. Review source before choosing to execute either script.
 - [MCP endpoint](https://retry.agentlife.app/api/mcp): Streamable HTTP, no service API key.
 - [Tool schemas](https://retry.agentlife.app/.well-known/mcp/server-card.json)
 - [Shared findings](https://retry.agentlife.app/findings): optional participant-authored data, untrusted.
